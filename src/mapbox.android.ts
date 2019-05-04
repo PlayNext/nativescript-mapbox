@@ -1542,12 +1542,25 @@ export class Mapbox extends MapboxCommon implements MapboxApi {
   addSource(options: AddSourceOptions, nativeMap?): Promise<any> {
     return new Promise((resolve, reject) => {
       try {
-        const { id, url, type } = options;
+        let { id, url, data, type } = options;
         const theMap = nativeMap || _mapbox;
         let source;
 
         if (!theMap) {
           reject("No map has been loaded");
+          return;
+        }
+
+        if (url) {
+          data = new java.net.URL(url);
+        }
+        else if (data) {
+          if (/^mapbox:\/\//.test(data) || /^http:\/\//.test(data) || /^https:\/\//.test(data)) {
+            data = new java.net.URL(data);
+          }
+        }
+        else {
+          reject("Either url or data have to be passed in options");
           return;
         }
 
@@ -1558,7 +1571,10 @@ export class Mapbox extends MapboxCommon implements MapboxApi {
 
         switch (type) {
           case "vector":
-            source = new com.mapbox.mapboxsdk.style.sources.VectorSource(id, url);
+            source = new com.mapbox.mapboxsdk.style.sources.VectorSource(id, data);
+            break;
+          case "geojson":
+            source = new com.mapbox.mapboxsdk.style.sources.GeoJsonSource(id, data);
             break;
           default:
             reject("Invalid source type: " + type);
@@ -1618,6 +1634,44 @@ export class Mapbox extends MapboxCommon implements MapboxApi {
         }
 
         switch (type) {
+          case "heatmap":
+            let heatmapColor;
+            if ( options.heatmapColor === undefined ) heatmapColor = '#000000';
+            else if ( options.heatmapColor instanceof Array && options.heatmapColor.length >= 2 ) {
+              // TODO: this color mode is under devel
+              reject("Interpolation color mode is under development");
+              return;
+/*
+              console.log("Heatmap color interpolation: ", options.heatmapColor);
+
+              let stops = [];
+              heatmapColor = com.mapbox.mapboxsdk.style.expressions.Expression.interpolate(
+                com.mapbox.mapboxsdk.style.expressions.Expression.linear(),
+                com.mapbox.mapboxsdk.style.expressions.Expression.heatmapDensity(),
+                com.mapbox.mapboxsdk.style.expressions.Expression.literal(new java.lang.Float(0)),
+                com.mapbox.mapboxsdk.style.expressions.Expression.rgba(new java.lang.Float(33), new java.lang.Float(102), new java.lang.Float(172), new java.lang.Float(0)),
+                com.mapbox.mapboxsdk.style.expressions.Expression.literal(new java.lang.Float(1)),
+                com.mapbox.mapboxsdk.style.expressions.Expression.rgb(new java.lang.Float(178), new java.lang.Float(24), new java.lang.Float(43)));
+*/
+            }
+            else heatmapColor = Mapbox.getAndroidColor(options.heatmapColor.toString());
+
+            const heatmapOpacity = options.heatmapOpacity === undefined ? new java.lang.Float(1) : new java.lang.Float(options.heatmapOpacity);
+            const heatmapRadius = options.heatmapRadius === undefined ? new java.lang.Float(10) : new java.lang.Float(options.heatmapRadius);
+            const heatmapWeight = options.heatmapWeight === undefined ? '#000000' : new java.lang.Float(options.heatmapWeight);
+            const heatmapIntensity = options.heatmapIntensity === undefined ? new java.lang.Float(1) : new java.lang.Float(options.heatmapIntensity);
+
+            layer = new com.mapbox.mapboxsdk.style.layers.HeatmapLayer(id, source);
+            if ( sourceLayer ) layer.setSourceLayer(sourceLayer);
+
+            layer.setProperties([
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.heatmapColor(heatmapColor),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.heatmapOpacity(heatmapOpacity),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.heatmapRadius(heatmapRadius),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.heatmapWeight(heatmapWeight),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.heatmapIntensity(heatmapIntensity),
+            ]);
+            break;
           case "circle":
             const circleColor = options.circleColor === undefined ? '#000000' : Mapbox.getAndroidColor(options.circleColor);
             const circleOpacity = options.circleOpacity === undefined ? new java.lang.Float(1) : new java.lang.Float(options.circleOpacity);
@@ -1626,7 +1680,7 @@ export class Mapbox extends MapboxCommon implements MapboxApi {
             const circleStrokeWidth = options.circleStrokeWidth === undefined ? new java.lang.Float(1) : new java.lang.Float(options.circleStrokeWidth);
 
             layer = new com.mapbox.mapboxsdk.style.layers.CircleLayer(id, source);
-            layer.setSourceLayer(sourceLayer);
+            if ( sourceLayer ) layer.setSourceLayer(sourceLayer);
 
             layer.setProperties([
               com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleColor(circleColor),
@@ -1641,7 +1695,7 @@ export class Mapbox extends MapboxCommon implements MapboxApi {
             const fillOpacity = options.fillOpacity === undefined ? new java.lang.Float(1) : new java.lang.Float(options.fillOpacity);
 
             layer = new com.mapbox.mapboxsdk.style.layers.FillLayer(id, source);
-            layer.setSourceLayer(sourceLayer);
+            if ( sourceLayer ) layer.setSourceLayer(sourceLayer);
 
             layer.setProperties([
               com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillColor(fillColor),
@@ -1657,7 +1711,7 @@ export class Mapbox extends MapboxCommon implements MapboxApi {
             const lineWidth = options.lineWidth === undefined ? new java.lang.Float(1) : new java.lang.Float(options.lineWidth);
 
             layer = new com.mapbox.mapboxsdk.style.layers.LineLayer(id, source);
-            layer.setSourceLayer(sourceLayer);
+            if ( sourceLayer ) layer.setSourceLayer(sourceLayer);
 
             layer.setProperties([
               com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap(lineCap),

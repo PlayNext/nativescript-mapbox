@@ -201,15 +201,25 @@ export interface AddGeoJsonClusteredOptions {
 export interface AddSourceOptions {
   id: string;
 
-  url: string;
+  url?: string;
+  data?: string;
   type: string;
 }
 
 export interface AddLayerOptions {
   id: string;
   source: string;
-  sourceLayer: string;
+  sourceLayer?: string;
   type: string;
+
+  /**
+   * 'heatmap' paint properties
+   */
+  heatmapColor?: string | Color | Array<any>;
+  heatmapOpacity?: number;
+  heatmapRadius?: number;
+  heatmapWeight?: number;
+  heatmapIntensity?: number;
 
   /**
    * 'circle' paint properties

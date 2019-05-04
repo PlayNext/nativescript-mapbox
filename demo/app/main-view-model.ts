@@ -392,6 +392,61 @@ export class HelloWorldModel extends Observable {
     );
   }
 
+  public doAddLayerAndSourceGeoJSON(): void {
+        this.mapbox.addSource(
+            {
+                id: "earthquakes-source",
+                type: "geojson",
+                data: "https://docs.mapbox.com/mapbox-gl-js/assets/earthquakes.geojson"
+            }
+        ).then(
+            () => {
+                this.mapbox.addLayer(
+                    {
+                        id: "earthquakes-data",
+                        source: "earthquakes-source",
+                        type: "heatmap",
+                        heatmapColor: "#FFA500",
+                        heatmapOpacity: 0.6,
+                        heatmapRadius: 10,
+                        heatmapWeight: 1,
+                        heatmapIntensity: 1,
+                    }
+                ).then(
+                    () => {
+                        let alertOptions: AlertOptions = {
+                            title: "GeoJSON heatmap added",
+                            message: "Moving to the USA as that's where the GeoJson data is drawn",
+                            okButtonText: "OK"
+                        };
+                        alert(alertOptions).then(
+                            () => {
+                                this.mapbox.setViewport(
+                                    {
+                                        animated: true,
+                                        bounds: {
+                                            north: 52.9,
+                                            east: -62.2,
+                                            south: 22.1,
+                                            west: -128.2
+                                        }
+                                    }
+                                );
+                            });
+
+                        console.log("Mapbox doAddLayerAndSourceGeoJSON done");
+                    },
+                    (error: string) => {
+                        console.log("mapbox doAddLayerAndSourceGeoJSON error: " + error);
+                    }
+                );
+            },
+            (error: string) => {
+                console.log("mapbox doAddLayerAndSourceGeoJSON error: " + error);
+            }
+        );
+    }
+
   public doListOfflineRegions(): void {
     this.mapbox.listOfflineRegions({
       accessToken: ACCESS_TOKEN
