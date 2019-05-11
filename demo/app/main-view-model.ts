@@ -402,7 +402,8 @@ export class HelloWorldModel extends Observable {
         ).then(
             () => {
                 this.mapbox.addLayer(
-                    {
+                    /*{
+                    TODO: heatmap is not yet ready for iOS
                         id: "earthquakes-data",
                         source: "earthquakes-source",
                         type: "heatmap",
@@ -411,7 +412,17 @@ export class HelloWorldModel extends Observable {
                         heatmapRadius: 10,
                         heatmapWeight: 1,
                         heatmapIntensity: 1,
-                    }
+                    }*/
+                {
+                    id: "earthquakes-data",
+                    source: "earthquakes-source",
+                    type: "circle",
+                    circleColor: "#FFA500",
+                    circleOpacity: 0.6,
+                    circleRadius: 10,
+                    circleStrokeColor: "#000000",
+                    circleStrokeWidth: 2,
+                }
                 ).then(
                     () => {
                         let alertOptions: AlertOptions = {

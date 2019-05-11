@@ -1039,7 +1039,7 @@ export class Mapbox extends MapboxCommon implements MapboxApi {
   addSource(options: AddSourceOptions, nativeMap?): Promise<any> {
     return new Promise((resolve, reject) => {
       try {
-        const { id, url, type } = options;
+        let { id, url, data, type } = options;
         let theMap: MGLMapView = nativeMap || _mapbox.mapView;
         let source;
 
@@ -1056,6 +1056,29 @@ export class Mapbox extends MapboxCommon implements MapboxApi {
         switch (type) {
           case "vector":
             source = MGLVectorTileSource.alloc().initWithIdentifierConfigurationURL(id, NSURL.URLWithString(url));
+            break;
+          case "geojson":
+            if (/^mapbox:\/\//.test(data) || /^http:\/\//.test(data) || /^https:\/\//.test(data)) {
+              url = data;
+            }
+            if ( url ) {
+              console.log("geojson url: "+url);
+              source = MGLShapeSource.alloc().initWithIdentifierURLOptions(id, NSURL.URLWithString(url), null);
+
+            }
+            else if ( data ) {
+              console.log("geojson data: "+data);
+              const geoDataStr = NSString.stringWithString(data);
+              console.log("stringWithString");
+              const geoData = geoDataStr.dataUsingEncoding(NSUTF8StringEncoding);
+              const geoDataBase64Enc = geoData.base64EncodedStringWithOptions(0);
+
+              const geo = NSData.alloc().initWithBase64EncodedStringOptions(geoDataBase64Enc, null);
+              const shape = MGLShape.shapeWithDataEncodingError(geo, NSUTF8StringEncoding);
+              source = MGLShapeSource.alloc().initWithIdentifierShapeOptions(id, shape, null);
+            }
+            else reject("Either url or data have to be passed in options");
+
             break;
           default:
             reject("Invalid source type: " + type);
@@ -1129,7 +1152,7 @@ export class Mapbox extends MapboxCommon implements MapboxApi {
             const circleStrokeWidth = options.circleStrokeWidth === undefined ? 2 : options.circleStrokeWidth;
 
             layer = MGLCircleStyleLayer.alloc().initWithIdentifierSource(id, theMap.style.sourceWithIdentifier(source));
-            layer.sourceLayerIdentifier = sourceLayer;
+            if ( sourceLayer) layer.sourceLayerIdentifier = sourceLayer;
 
             layer.circleColor = NSExpression.expressionForConstantValue(circleColor);
             layer.circleOpacity = NSExpression.expressionForConstantValue(circleOpacity);
@@ -1137,12 +1160,26 @@ export class Mapbox extends MapboxCommon implements MapboxApi {
             layer.circleStrokeColor = NSExpression.expressionForConstantValue(circleStrokeColor);
             layer.circleStrokeWidth = NSExpression.expressionForConstantValue(circleStrokeWidth);
             break;
+          case "heatmap":
+            const heatmapColor = !options.heatmapColor ? UIColor.blackColor : (options.heatmapColor instanceof Color ? options.heatmapColor.ios : new Color(options.heatmapColor).ios);
+            const heatmapOpacity = options.heatmapOpacity === undefined ? 1 : options.heatmapOpacity;
+            const heatmapRadius = options.heatmapRadius || 5;
+            const heatmapWeight = options.heatmapWeight === undefined ? 1 : options.heatmapWeight;
+            const heatmapIntensity = options.heatmapIntensity === undefined ? 1 : options.heatmapIntensity;
+            layer = MGLHeatmapStyleLayer.alloc().initWithIdentifierSource(id, theMap.style.sourceWithIdentifier(source));
+            if ( sourceLayer) layer.sourceLayerIdentifier = sourceLayer;
+            layer.heatmapColor = NSExpression.expressionForConstantValue(heatmapColor);
+            layer.heatmapOpacity = NSExpression.expressionForConstantValue(heatmapOpacity);
+            layer.heatmapRadius = NSExpression.expressionForConstantValue(heatmapRadius);
+            layer.heatmapWeight = NSExpression.expressionForConstantValue(heatmapWeight);
+            layer.heatmapIntensity = NSExpression.expressionForConstantValue(heatmapIntensity);
+            break;
           case "fill":
             const fillColor = !options.fillColor ? UIColor.blackColor : (options.fillColor instanceof Color ? options.fillColor.ios : new Color(options.fillColor).ios);
             const fillOpacity = options.fillOpacity === undefined ? 1 : options.fillOpacity;
 
             layer = MGLFillStyleLayer.alloc().initWithIdentifierSource(id, theMap.style.sourceWithIdentifier(source));
-            layer.sourceLayerIdentifier = sourceLayer;
+            if ( sourceLayer) layer.sourceLayerIdentifier = sourceLayer;
 
             layer.fillColor = NSExpression.expressionForConstantValue(fillColor);
             layer.fillOpacity = NSExpression.expressionForConstantValue(fillOpacity);
@@ -1156,7 +1193,7 @@ export class Mapbox extends MapboxCommon implements MapboxApi {
             const lineWidth = options.lineWidth === undefined ? 2 : options.lineWidth;
 
             layer = MGLLineStyleLayer.alloc().initWithIdentifierSource(id, theMap.style.sourceWithIdentifier(source));
-            layer.sourceLayerIdentifier = sourceLayer;
+            if ( sourceLayer) layer.sourceLayerIdentifier = sourceLayer;
 
             layer.lineCap = NSExpression.expressionForConstantValue(lineCap);
             layer.lineJoin = NSExpression.expressionForConstantValue(lineJoin);

@@ -215,7 +215,7 @@ export interface AddLayerOptions {
   /**
    * 'heatmap' paint properties
    */
-  heatmapColor?: string | Color | Array<any>;
+  heatmapColor?: string | Color;
   heatmapOpacity?: number;
   heatmapRadius?: number;
   heatmapWeight?: number;
