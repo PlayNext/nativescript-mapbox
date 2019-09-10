@@ -2,6 +2,60 @@
   <TabView>
     <TabView.items>
 
+      <TabViewItem title="By Code">
+        <TabViewItem.view>
+          <GridLayout columns="*, *, *, *" rows="auto, auto, auto, auto, auto, auto, auto, auto, auto, auto, auto" horizontalAlignment="stretch" class="tab-content">
+
+            <Button row="0" col="0" text="show" tap="{{ doShow }}" class="button" />
+            <Button row="0" col="1"  text="hide" tap="{{ doHide }}" class="button" />
+            <Button row="0" col="2"  text="unhide" tap="{{ doUnhide }}" class="button" />
+            <Button row="0" col="3"  text="destroy" tap="{{ doDestroy }}" class="button" />
+
+            <Button row="1" col="0" text="center?" tap="{{ doGetCenter }}" class="button" />
+            <Button row="1" col="1" text="center!" tap="{{ doSetCenter }}" class="button" />
+            <Button row="1" col="2" text="zoom?" tap="{{ doGetZoomLevel }}" class="button" />
+            <Button row="1" col="3" text="zoom!" tap="{{ doSetZoomLevel }}" class="button" />
+
+            <Button row="2" col="0" text="tilt?" tap="{{ doGetTilt }}" class="button" />
+            <Button row="2" col="1" text="tilt!" tap="{{ doSetTilt }}" class="button" />
+            <Button row="2" col="2" text="viewport?" tap="{{ doGetViewport }}" class="button" />
+            <Button row="2" col="3" text="viewport!" tap="{{ doSetViewport }}" class="button" />
+
+            <Button row="3" colSpan="2" text="add 4 markers" tap="{{ doAddMarkers }}" class="button" />
+            <Button row="3" col="2" colSpan="2"  text="animate camera" tap="{{ doAnimateCamera }}" class="button" />
+
+            <Button row="4" colSpan="2" text="remove 2 markers" tap="{{ doRemove2Markers }}" class="button" />
+            <Button row="4" col="2" colSpan="2" text="remove all markers" tap="{{ doRemoveAllMarkers }}" class="button" />
+
+            <Button row="5" colSpan="2" text="get user location" tap="{{ doGetUserLocation }}" class="button" />
+            <Button row="5" col="2" colSpan="2" text="track user" tap="{{ doTrackUser }}" class="button" />
+
+            <Android>
+              <Button row="6" colSpan="2" text="GeoJSON heatmap" tap="{{ doAddLayerAndSourceGeoJSON }}" class="button" />
+              <Button row="6" col="2" colSpan="2" text="Clustered GeoJSON" tap="{{ doAddAndClusterGeoJSON }}" class="button" />
+            </Android>
+            <ios>
+              <Button row="6" colSpan="4" text="GeoJSON circles" tap="{{ doAddLayerAndSourceGeoJSON }}" class="button" />
+            </ios>
+
+            <Button row="7" col="0" text="+polyline" tap="{{ doAddPolyline }}" class="button" />
+            <Button row="7" col="1" text="-polyline" tap="{{ doRemovePolyline }}" class="button" />
+            <Button row="7" col="2" text="+polygon" tap="{{ doAddPolygon }}" class="button" />
+            <Button row="7" col="3" text="-polygon" tap="{{ doRemovePolygon }}" class="button" />
+
+            <Button row="8" colSpan="2" text="DL Amsterdam" tap="{{ doDownloadAmsterdam }}" class="button button-offline" />
+            <Button row="8" col="2" colSpan="2"  text="DL current view" tap="{{ doDownloadCurrentViewportAsOfflineRegion }}" class="button button-offline" />
+
+            <Button row="9" colSpan="2" text="Del Amsterdam" tap="{{ doDeleteOfflineRegion }}" class="button button-offline" />
+            <Button row="9" col="2" colSpan="2"  text="List downloaded" tap="{{ doListOfflineRegions }}" class="button button-offline" />
+
+            <Button row="10" colSpan="2"  text="location perm?" tap="{{ doCheckHasFineLocationPermission }}" class="button button-permissions" />
+            <Button row="10" col="2" colSpan="2"  text="ask permission" tap="{{ doRequestFineLocationPermission }}" class="button button-permissions" />
+
+          </GridLayout>
+        </TabViewItem.view>
+      </TabViewItem>
+
       <TabViewItem title="By XML">
         <TabViewItem.view>
           <GridLayout columns="*, *" rows="110, *, 160" horizontalAlignment="stretch">
@@ -73,56 +127,6 @@
                   accessToken="sk.eyJ1IjoiZWRkeXZlcmJydWdnZW4iLCJhIjoia1JpRW82NCJ9.OgnvpsKzB3GJhzyofQNUBw">
               </map:MapboxView>
             </ContentView>
-          </GridLayout>
-        </TabViewItem.view>
-      </TabViewItem>
-
-      <TabViewItem title="By Code">
-        <TabViewItem.view>
-          <GridLayout columns="*, *, *, *" rows="auto, auto, auto, auto, auto, auto, auto, auto, auto, auto, auto" horizontalAlignment="stretch" class="tab-content">
-
-            <Button row="0" col="0" text="show" tap="{{ doShow }}" class="button" />
-            <Button row="0" col="1"  text="hide" tap="{{ doHide }}" class="button" />
-            <Button row="0" col="2"  text="unhide" tap="{{ doUnhide }}" class="button" />
-            <Button row="0" col="3"  text="destroy" tap="{{ doDestroy }}" class="button" />
-
-            <Button row="1" col="0" text="center?" tap="{{ doGetCenter }}" class="button" />
-            <Button row="1" col="1" text="center!" tap="{{ doSetCenter }}" class="button" />
-            <Button row="1" col="2" text="zoom?" tap="{{ doGetZoomLevel }}" class="button" />
-            <Button row="1" col="3" text="zoom!" tap="{{ doSetZoomLevel }}" class="button" />
-
-            <Button row="2" col="0" text="tilt?" tap="{{ doGetTilt }}" class="button" />
-            <Button row="2" col="1" text="tilt!" tap="{{ doSetTilt }}" class="button" />
-            <Button row="2" col="2" text="viewport?" tap="{{ doGetViewport }}" class="button" />
-            <Button row="2" col="3" text="viewport!" tap="{{ doSetViewport }}" class="button" />
-
-            <Button row="3" colSpan="2" text="add 4 markers" tap="{{ doAddMarkers }}" class="button" />
-            <Button row="3" col="2" colSpan="2"  text="animate camera" tap="{{ doAnimateCamera }}" class="button" />
-
-            <Button row="4" colSpan="2" text="remove 2 markers" tap="{{ doRemove2Markers }}" class="button" />
-            <Button row="4" col="2" colSpan="2" text="remove all markers" tap="{{ doRemoveAllMarkers }}" class="button" />
-
-            <Button row="5" colSpan="2" text="get user location" tap="{{ doGetUserLocation }}" class="button" />
-            <Button row="5" col="2" colSpan="2" text="track user" tap="{{ doTrackUser }}" class="button" />
-
-            <Android>
-              <Button row="6" colSpan="4" text="Clustered GeoJSON" tap="{{ doAddAndClusterGeoJSON }}" class="button" />
-            </Android>
-
-            <Button row="7" col="0" text="+polyline" tap="{{ doAddPolyline }}" class="button" />
-            <Button row="7" col="1" text="-polyline" tap="{{ doRemovePolyline }}" class="button" />
-            <Button row="7" col="2" text="+polygon" tap="{{ doAddPolygon }}" class="button" />
-            <Button row="7" col="3" text="-polygon" tap="{{ doRemovePolygon }}" class="button" />
-
-            <Button row="8" colSpan="2" text="DL Amsterdam" tap="{{ doDownloadAmsterdam }}" class="button button-offline" />
-            <Button row="8" col="2" colSpan="2"  text="DL current view" tap="{{ doDownloadCurrentViewportAsOfflineRegion }}" class="button button-offline" />
-
-            <Button row="9" colSpan="2" text="Del Amsterdam" tap="{{ doDeleteOfflineRegion }}" class="button button-offline" />
-            <Button row="9" col="2" colSpan="2"  text="List downloaded" tap="{{ doListOfflineRegions }}" class="button button-offline" />
-
-            <Button row="10" colSpan="2"  text="location perm?" tap="{{ doCheckHasFineLocationPermission }}" class="button button-permissions" />
-            <Button row="10" col="2" colSpan="2"  text="ask permission" tap="{{ doRequestFineLocationPermission }}" class="button button-permissions" />
-
           </GridLayout>
         </TabViewItem.view>
       </TabViewItem>

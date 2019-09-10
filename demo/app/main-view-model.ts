@@ -339,6 +339,125 @@ export class HelloWorldModel extends Observable {
     );
   }
 
+  public doAddLayerAndSource(): void {
+    this.mapbox.addSource(
+        {
+          id: "terrain-source",
+          type: "vector",
+          url: "mapbox://mapbox.mapbox-terrain-v2"
+        }
+    ).then(
+      () => {
+          this.mapbox.addLayer(
+            {
+              id: "terrain-data",
+              source: "terrain-source",
+              sourceLayer: "contour",
+              type: "line",
+              lineJoin: "round",
+              lineCap: "round",
+              lineColor: "#ff69b4",
+              lineWidth: 1,
+            }
+          ).then(
+            () => {
+              console.log("Mapbox doAddLayerAndSource done");
+            },
+            (error: string) => {
+              console.log("mapbox doAddLayerAndSource error: " + error);
+            }
+          );
+        },
+        (error: string) => {
+          console.log("mapbox doAddLayerAndSource error: " + error);
+        }
+    );
+  }
+
+  public doRemoveLayerAndSource(): void {
+    this.mapbox.removeLayer("terrain-data").then(
+      () => {
+          this.mapbox.removeSource("terrain-source").then(
+            () => {
+              console.log("Mapbox doRemoveLayerAndSource done");
+            },
+            (error: string) => {
+              console.log("mapbox doAddSource error: " + error);
+            }
+          );
+        },
+        (error: string) => {
+          console.log("mapbox doAddSource error: " + error);
+        }
+    );
+  }
+
+  public doAddLayerAndSourceGeoJSON(): void {
+        this.mapbox.addSource(
+            {
+                id: "earthquakes-source",
+                type: "geojson",
+                data: "https://docs.mapbox.com/mapbox-gl-js/assets/earthquakes.geojson"
+            }
+        ).then(
+            () => {
+                this.mapbox.addLayer(
+                    /*{
+                    TODO: heatmap is not yet ready for iOS
+                        id: "earthquakes-data",
+                        source: "earthquakes-source",
+                        type: "heatmap",
+                        heatmapColor: "#FFA500",
+                        heatmapOpacity: 0.6,
+                        heatmapRadius: 10,
+                        heatmapWeight: 1,
+                        heatmapIntensity: 1,
+                    }*/
+                {
+                    id: "earthquakes-data",
+                    source: "earthquakes-source",
+                    type: "circle",
+                    circleColor: "#FFA500",
+                    circleOpacity: 0.6,
+                    circleRadius: 10,
+                    circleStrokeColor: "#000000",
+                    circleStrokeWidth: 2,
+                }
+                ).then(
+                    () => {
+                        let alertOptions: AlertOptions = {
+                            title: "GeoJSON heatmap added",
+                            message: "Moving to the USA as that's where the GeoJson data is drawn",
+                            okButtonText: "OK"
+                        };
+                        alert(alertOptions).then(
+                            () => {
+                                this.mapbox.setViewport(
+                                    {
+                                        animated: true,
+                                        bounds: {
+                                            north: 52.9,
+                                            east: -62.2,
+                                            south: 22.1,
+                                            west: -128.2
+                                        }
+                                    }
+                                );
+                            });
+
+                        console.log("Mapbox doAddLayerAndSourceGeoJSON done");
+                    },
+                    (error: string) => {
+                        console.log("mapbox doAddLayerAndSourceGeoJSON error: " + error);
+                    }
+                );
+            },
+            (error: string) => {
+                console.log("mapbox doAddLayerAndSourceGeoJSON error: " + error);
+            }
+        );
+    }
+
   public doListOfflineRegions(): void {
     this.mapbox.listOfflineRegions({
       accessToken: ACCESS_TOKEN

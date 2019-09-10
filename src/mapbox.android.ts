@@ -8,8 +8,10 @@ import * as http from "tns-core-modules/http";
 import {
   AddExtrusionOptions,
   AddGeoJsonClusteredOptions,
+  AddLayerOptions,
   AddPolygonOptions,
   AddPolylineOptions,
+  AddSourceOptions,
   AnimateCameraOptions,
   DeleteOfflineRegionOptions,
   DownloadOfflineRegionOptions,
@@ -1504,6 +1506,227 @@ export class Mapbox extends MapboxCommon implements MapboxApi {
         resolve();
       } catch (ex) {
         console.log("Error in mapbox.addGeoJsonClustered: " + ex);
+        reject(ex);
+      }
+    });
+  }
+
+  addSource(options: AddSourceOptions, nativeMap?): Promise<any> {
+    return new Promise((resolve, reject) => {
+      try {
+        let { id, url, data, type } = options;
+        const theMap = nativeMap || _mapbox;
+        let source;
+
+        if (!theMap) {
+          reject("No map has been loaded");
+          return;
+        }
+
+        if (url) {
+          data = new java.net.URL(url);
+        }
+        else if (data) {
+          if (/^mapbox:\/\//.test(data) || /^http:\/\//.test(data) || /^https:\/\//.test(data)) {
+            data = new java.net.URL(data);
+          }
+        }
+        else {
+          reject("Either url or data have to be passed in options");
+          return;
+        }
+
+        if (theMap.mapboxMap.getSource(id)) {
+          reject("Source exists: " + id);
+          return;
+        }
+
+        switch (type) {
+          case "vector":
+            source = new com.mapbox.mapboxsdk.style.sources.VectorSource(id, data);
+            break;
+          case "geojson":
+            source = new com.mapbox.mapboxsdk.style.sources.GeoJsonSource(id, data);
+            break;
+          default:
+            reject("Invalid source type: " + type);
+            return;
+        }
+
+        if (!source) {
+          const ex = "No source to add";
+          console.log("Error in mapbox.addSource: " + ex);
+          reject(ex);
+          return;
+        }
+
+        theMap.mapboxMap.addSource(source);
+        resolve();
+      } catch (ex) {
+        console.log("Error in mapbox.addSource: " + ex);
+        reject(ex);
+      }
+    });
+  }
+
+  removeSource(id: string, nativeMap?): Promise<any> {
+    return new Promise((resolve, reject) => {
+      try {
+        const theMap = nativeMap || _mapbox;
+
+        if (!theMap) {
+          reject("No map has been loaded");
+          return;
+        }
+
+        theMap.mapboxMap.removeSource(id);
+        resolve();
+      } catch (ex) {
+        console.log("Error in mapbox.removeSource: " + ex);
+        reject(ex);
+      }
+    });
+  }
+
+  addLayer(options: AddLayerOptions, nativeMap?): Promise<any> {
+    return new Promise((resolve, reject) => {
+      try {
+        const { id, source, sourceLayer, type } = options;
+        const theMap = nativeMap || _mapbox;
+        let layer;
+
+        if (!theMap) {
+          reject("No map has been loaded");
+          return;
+        }
+
+        if (theMap.mapboxMap.getLayer(id)) {
+          reject("Layer exists: " + id);
+          return;
+        }
+
+        switch (type) {
+          case "heatmap":
+            let heatmapColor;
+            if ( options.heatmapColor === undefined ) heatmapColor = '#000000';
+            else if ( options.heatmapColor instanceof Array && options.heatmapColor.length >= 2 ) {
+              // TODO: this color mode is under devel
+              reject("Interpolation color mode is under development");
+              return;
+/*
+              console.log("Heatmap color interpolation: ", options.heatmapColor);
+
+              let stops = [];
+              heatmapColor = com.mapbox.mapboxsdk.style.expressions.Expression.interpolate(
+                com.mapbox.mapboxsdk.style.expressions.Expression.linear(),
+                com.mapbox.mapboxsdk.style.expressions.Expression.heatmapDensity(),
+                com.mapbox.mapboxsdk.style.expressions.Expression.literal(new java.lang.Float(0)),
+                com.mapbox.mapboxsdk.style.expressions.Expression.rgba(new java.lang.Float(33), new java.lang.Float(102), new java.lang.Float(172), new java.lang.Float(0)),
+                com.mapbox.mapboxsdk.style.expressions.Expression.literal(new java.lang.Float(1)),
+                com.mapbox.mapboxsdk.style.expressions.Expression.rgb(new java.lang.Float(178), new java.lang.Float(24), new java.lang.Float(43)));
+*/
+            }
+            else heatmapColor = Mapbox.getAndroidColor(options.heatmapColor.toString());
+
+            const heatmapOpacity = options.heatmapOpacity === undefined ? new java.lang.Float(1) : new java.lang.Float(options.heatmapOpacity);
+            const heatmapRadius = options.heatmapRadius === undefined ? new java.lang.Float(10) : new java.lang.Float(options.heatmapRadius);
+            const heatmapWeight = options.heatmapWeight === undefined ? '#000000' : new java.lang.Float(options.heatmapWeight);
+            const heatmapIntensity = options.heatmapIntensity === undefined ? new java.lang.Float(1) : new java.lang.Float(options.heatmapIntensity);
+
+            layer = new com.mapbox.mapboxsdk.style.layers.HeatmapLayer(id, source);
+            if ( sourceLayer ) layer.setSourceLayer(sourceLayer);
+
+            layer.setProperties([
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.heatmapColor(heatmapColor),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.heatmapOpacity(heatmapOpacity),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.heatmapRadius(heatmapRadius),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.heatmapWeight(heatmapWeight),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.heatmapIntensity(heatmapIntensity),
+            ]);
+            break;
+          case "circle":
+            const circleColor = options.circleColor === undefined ? '#000000' : Mapbox.getAndroidColor(options.circleColor);
+            const circleOpacity = options.circleOpacity === undefined ? new java.lang.Float(1) : new java.lang.Float(options.circleOpacity);
+            const circleRadius = options.circleRadius === undefined ? new java.lang.Float(10) : new java.lang.Float(options.circleRadius);
+            const circleStrokeColor = options.circleStrokeColor === undefined ? '#000000' : Mapbox.getAndroidColor(options.circleStrokeColor);
+            const circleStrokeWidth = options.circleStrokeWidth === undefined ? new java.lang.Float(1) : new java.lang.Float(options.circleStrokeWidth);
+
+            layer = new com.mapbox.mapboxsdk.style.layers.CircleLayer(id, source);
+            if ( sourceLayer ) layer.setSourceLayer(sourceLayer);
+
+            layer.setProperties([
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleColor(circleColor),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleOpacity(circleOpacity),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleRadius(circleRadius),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleStrokeColor(circleStrokeColor),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleStrokeWidth(circleStrokeWidth),
+            ]);
+            break;
+          case "fill":
+            const fillColor = options.fillColor === undefined ? '#000000' : Mapbox.getAndroidColor(options.fillColor);
+            const fillOpacity = options.fillOpacity === undefined ? new java.lang.Float(1) : new java.lang.Float(options.fillOpacity);
+
+            layer = new com.mapbox.mapboxsdk.style.layers.FillLayer(id, source);
+            if ( sourceLayer ) layer.setSourceLayer(sourceLayer);
+
+            layer.setProperties([
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillColor(fillColor),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillOpacity(fillOpacity),
+            ]);
+            break;
+          case "line":
+            const lineCap = options.lineCap === undefined ? 'LINE_CAP_ROUND' : 'LINE_CAP_' + options.lineCap.toUpperCase();
+            const lineJoin = options.lineJoin === undefined ? 'LINE_JOIN_ROUND' : 'LINE_JOIN_' + options.lineCap.toUpperCase();
+
+            const lineColor = options.lineColor === undefined ? '#000000' : Mapbox.getAndroidColor(options.lineColor);
+            const lineOpacity = options.lineOpacity === undefined ? new java.lang.Float(1) : new java.lang.Float(options.lineOpacity);
+            const lineWidth = options.lineWidth === undefined ? new java.lang.Float(1) : new java.lang.Float(options.lineWidth);
+
+            layer = new com.mapbox.mapboxsdk.style.layers.LineLayer(id, source);
+            if ( sourceLayer ) layer.setSourceLayer(sourceLayer);
+
+            layer.setProperties([
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap(lineCap),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineJoin(lineJoin),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor(lineColor),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineOpacity(lineOpacity),
+              com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth(lineWidth),
+            ]);
+            break;
+          default:
+            reject("Invalid layer type: " + options.type);
+            break;
+        }
+
+        if (!layer) {
+          const ex = "No layer to add";
+          console.log("Error in mapbox.addLayer: " + ex);
+          reject(ex);
+        }
+
+        theMap.mapboxMap.addLayer(layer);
+        resolve();
+      } catch (ex) {
+        console.log("Error in mapbox.addLayer: " + ex);
+        reject(ex);
+      }
+    });
+  }
+
+  removeLayer(id: string, nativeMap?): Promise<any> {
+    return new Promise((resolve, reject) => {
+      try {
+        const theMap = nativeMap || _mapbox;
+
+        if (!theMap) {
+          reject("No map has been loaded");
+          return;
+        }
+
+        theMap.mapboxMap.removeLayer(id);
+        resolve();
+      } catch (ex) {
+        console.log("Error in mapbox.removeLayer: " + ex);
         reject(ex);
       }
     });

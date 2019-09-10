@@ -6,8 +6,10 @@ import * as http from "tns-core-modules/http";
 import {
   AddExtrusionOptions,
   AddGeoJsonClusteredOptions,
+  AddLayerOptions,
   AddPolygonOptions,
   AddPolylineOptions,
+  AddSourceOptions,
   AnimateCameraOptions,
   DeleteOfflineRegionOptions,
   DownloadOfflineRegionOptions,
@@ -948,6 +950,217 @@ export class Mapbox extends MapboxCommon implements MapboxApi {
 
   addGeoJsonClustered(options: AddGeoJsonClusteredOptions, nativeMap?): Promise<any> {
     throw new Error('Method not implemented.');
+  }
+
+  addSource(options: AddSourceOptions, nativeMap?): Promise<any> {
+    return new Promise((resolve, reject) => {
+      try {
+        let { id, url, data, type } = options;
+        let theMap: MGLMapView = nativeMap || _mapbox.mapView;
+        let source;
+
+        if (!theMap) {
+          reject("No map has been loaded");
+          return;
+        }
+
+        if (theMap.style.sourceWithIdentifier(id)) {
+          reject("Source exists: " + id);
+          return;
+        }
+
+        switch (type) {
+          case "vector":
+            source = MGLVectorTileSource.alloc().initWithIdentifierConfigurationURL(id, NSURL.URLWithString(url));
+            break;
+          case "geojson":
+            if (/^mapbox:\/\//.test(data) || /^http:\/\//.test(data) || /^https:\/\//.test(data)) {
+              url = data;
+            }
+            if ( url ) {
+              console.log("geojson url: "+url);
+              source = MGLShapeSource.alloc().initWithIdentifierURLOptions(id, NSURL.URLWithString(url), null);
+
+            }
+            else if ( data ) {
+              console.log("geojson data: "+data);
+              const geoDataStr = NSString.stringWithString(data);
+              console.log("stringWithString");
+              const geoData = geoDataStr.dataUsingEncoding(NSUTF8StringEncoding);
+              const geoDataBase64Enc = geoData.base64EncodedStringWithOptions(0);
+
+              const geo = NSData.alloc().initWithBase64EncodedStringOptions(geoDataBase64Enc, null);
+              const shape = MGLShape.shapeWithDataEncodingError(geo, NSUTF8StringEncoding);
+              source = MGLShapeSource.alloc().initWithIdentifierShapeOptions(id, shape, null);
+            }
+            else reject("Either url or data have to be passed in options");
+
+            break;
+          default:
+            reject("Invalid source type: " + type);
+            return;
+        }
+
+        if (!source) {
+          const ex = "No source to add";
+          console.log("Error in mapbox.addSource: " + ex);
+          reject(ex);
+          return;
+        }
+
+        theMap.style.addSource(source);
+        resolve();
+      } catch (ex) {
+        console.log("Error in mapbox.addSource: " + ex);
+        reject(ex);
+      }
+    });
+  }
+
+  removeSource(id: string, nativeMap?): Promise<any> {
+    return new Promise((resolve, reject) => {
+      try {
+        let theMap: MGLMapView = nativeMap || _mapbox.mapView;
+
+        if (!theMap) {
+          reject("No map has been loaded");
+          return;
+        }
+
+        const source = theMap.style.sourceWithIdentifier(id);
+        if (!source) {
+          reject("Source does not exist");
+          return;
+        }
+
+        theMap.style.removeSource(source);
+        resolve();
+      } catch (ex) {
+        console.log("Error in mapbox.removeSource: " + ex);
+        reject(ex);
+      }
+    });
+  }
+
+  addLayer(options: AddLayerOptions, nativeMap?): Promise<any> {
+    return new Promise((resolve, reject) => {
+      try {
+        const { id, source, sourceLayer, type } = options;
+        let theMap: MGLMapView = nativeMap || _mapbox.mapView;
+        let layer;
+
+        if (!theMap) {
+          reject("No map has been loaded");
+          return;
+        }
+
+        if (theMap.style.layerWithIdentifier(id)) {
+          reject("Layer exists: " + id);
+          return;
+        }
+
+        switch (type) {
+          case "circle":
+            const circleColor = !options.circleColor ? UIColor.blackColor : (options.circleColor instanceof Color ? options.circleColor.ios : new Color(options.circleColor).ios);
+            const circleOpacity = options.circleOpacity === undefined ? 1 : options.circleOpacity;
+            const circleRadius = options.circleRadius || 5;
+            const circleStrokeColor = !options.circleStrokeColor ? UIColor.blackColor : (options.circleStrokeColor instanceof Color ? options.circleStrokeColor.ios : new Color(options.circleStrokeColor).ios);
+            const circleStrokeWidth = options.circleStrokeWidth === undefined ? 2 : options.circleStrokeWidth;
+
+            layer = MGLCircleStyleLayer.alloc().initWithIdentifierSource(id, theMap.style.sourceWithIdentifier(source));
+            if ( sourceLayer) layer.sourceLayerIdentifier = sourceLayer;
+
+            layer.circleColor = NSExpression.expressionForConstantValue(circleColor);
+            layer.circleOpacity = NSExpression.expressionForConstantValue(circleOpacity);
+            layer.circleRadius = NSExpression.expressionForConstantValue(circleRadius);
+            layer.circleStrokeColor = NSExpression.expressionForConstantValue(circleStrokeColor);
+            layer.circleStrokeWidth = NSExpression.expressionForConstantValue(circleStrokeWidth);
+            break;
+          case "heatmap":
+            const heatmapColor = !options.heatmapColor ? UIColor.blackColor : (options.heatmapColor instanceof Color ? options.heatmapColor.ios : new Color(options.heatmapColor).ios);
+            const heatmapOpacity = options.heatmapOpacity === undefined ? 1 : options.heatmapOpacity;
+            const heatmapRadius = options.heatmapRadius || 5;
+            const heatmapWeight = options.heatmapWeight === undefined ? 1 : options.heatmapWeight;
+            const heatmapIntensity = options.heatmapIntensity === undefined ? 1 : options.heatmapIntensity;
+            layer = MGLHeatmapStyleLayer.alloc().initWithIdentifierSource(id, theMap.style.sourceWithIdentifier(source));
+            if ( sourceLayer) layer.sourceLayerIdentifier = sourceLayer;
+            layer.heatmapColor = NSExpression.expressionForConstantValue(heatmapColor);
+            layer.heatmapOpacity = NSExpression.expressionForConstantValue(heatmapOpacity);
+            layer.heatmapRadius = NSExpression.expressionForConstantValue(heatmapRadius);
+            layer.heatmapWeight = NSExpression.expressionForConstantValue(heatmapWeight);
+            layer.heatmapIntensity = NSExpression.expressionForConstantValue(heatmapIntensity);
+            break;
+          case "fill":
+            const fillColor = !options.fillColor ? UIColor.blackColor : (options.fillColor instanceof Color ? options.fillColor.ios : new Color(options.fillColor).ios);
+            const fillOpacity = options.fillOpacity === undefined ? 1 : options.fillOpacity;
+
+            layer = MGLFillStyleLayer.alloc().initWithIdentifierSource(id, theMap.style.sourceWithIdentifier(source));
+            if ( sourceLayer) layer.sourceLayerIdentifier = sourceLayer;
+
+            layer.fillColor = NSExpression.expressionForConstantValue(fillColor);
+            layer.fillOpacity = NSExpression.expressionForConstantValue(fillOpacity);
+            break;
+          case "line":
+            const lineCap = options.lineCap === undefined ? 'round' : options.lineCap;
+            const lineJoin = options.lineJoin === undefined ? 'round' : options.lineJoin;
+
+            const lineColor = options.lineColor === undefined ? UIColor.blackColor : (options.lineColor instanceof Color ? options.lineColor.ios : new Color(options.lineColor).ios);
+            const lineOpacity = options.lineOpacity === undefined ? 1 : options.lineOpacity;
+            const lineWidth = options.lineWidth === undefined ? 2 : options.lineWidth;
+
+            layer = MGLLineStyleLayer.alloc().initWithIdentifierSource(id, theMap.style.sourceWithIdentifier(source));
+            if ( sourceLayer) layer.sourceLayerIdentifier = sourceLayer;
+
+            layer.lineCap = NSExpression.expressionForConstantValue(lineCap);
+            layer.lineJoin = NSExpression.expressionForConstantValue(lineJoin);
+            layer.lineColor = NSExpression.expressionForConstantValue(lineColor);
+            layer.lineOpacity = NSExpression.expressionForConstantValue(lineOpacity);
+            layer.lineWidth = NSExpression.expressionForConstantValue(lineWidth);
+            break;
+          default:
+            reject("Invalid layer type: " + options.type);
+            break;
+        }
+
+        if (!layer) {
+          const ex = "No layer to add";
+          console.log("Error in mapbox.addLayer: " + ex);
+          reject(ex);
+        }
+        console.log('adding the layer!');
+        console.log(layer);
+        theMap.style.addLayer(layer);
+        resolve();
+      } catch (ex) {
+        console.log("Error in mapbox.addLayer: " + ex);
+        reject(ex);
+      }
+    });
+  }
+
+  removeLayer(id: string, nativeMap?): Promise<any> {
+    return new Promise((resolve, reject) => {
+      try {
+        let theMap: MGLMapView = nativeMap || _mapbox.mapView;
+
+        if (!theMap) {
+          reject("No map has been loaded");
+          return;
+        }
+
+        const layer = theMap.style.layerWithIdentifier(id);
+        if (!layer) {
+          reject("Layer does not exist");
+          return;
+        }
+
+        theMap.style.removeLayer(layer);
+        resolve();
+      } catch (ex) {
+        console.log("Error in mapbox.removeLayer: " + ex);
+        reject(ex);
+      }
+    });
   }
 
   trackUser(options: TrackUserOptions, nativeMap?): Promise<void> {

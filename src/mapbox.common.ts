@@ -182,6 +182,58 @@ export interface AddGeoJsonClusteredOptions {
   clusters?: Array<MapboxCluster>;
 }
 
+export interface AddSourceOptions {
+  id: string;
+
+  url?: string;
+  data?: string;
+  type: string;
+}
+
+export interface AddLayerOptions {
+  id: string;
+  source: string;
+  sourceLayer?: string;
+  type: string;
+
+  /**
+   * 'heatmap' paint properties
+   */
+  heatmapColor?: string | Color;
+  heatmapOpacity?: number;
+  heatmapRadius?: number;
+  heatmapWeight?: number;
+  heatmapIntensity?: number;
+
+  /**
+   * 'circle' paint properties
+   */
+  circleColor?: string | Color;
+  circleOpacity?: number;
+  circleRadius?: number;
+  circleStrokeColor?: string | Color;
+  circleStrokeWidth?: number;
+
+  /**
+   * 'fill' paint properties
+   */
+  fillColor?: string | Color;
+  fillOpacity?: number;
+
+  /**
+   * 'line' layout properties
+   */
+  lineCap?: string;
+  lineJoin?: string;
+
+  /**
+   * 'line' paint properties
+   */
+  lineColor?: string | Color;
+  lineOpacity?: number;
+  lineWidth?: number;
+}
+
 export type UserTrackingMode = "NONE" | "FOLLOW" | "FOLLOW_WITH_HEADING" | "FOLLOW_WITH_COURSE";
 
 export interface TrackUserOptions {
@@ -386,6 +438,14 @@ export interface MapboxApi {
   deleteOfflineRegion(options: DeleteOfflineRegionOptions): Promise<any>;
 
   addGeoJsonClustered(options: AddGeoJsonClusteredOptions): Promise<any>;
+
+  addSource(options: AddSourceOptions): Promise<any>;
+
+  removeSource(id: string, nativeMap?: any): Promise<any>;
+
+  addLayer(options: AddLayerOptions): Promise<any>;
+
+  removeLayer(id: string, nativeMap?: any): Promise<any>;
 
   // addExtrusion(options: AddExtrusionOptions): Promise<any>;
 }
